@@ -35,21 +35,26 @@ const initContract = async () => {
 
 const initApp = () => {
   // get DOM elements
-  const $depositAmount = getElementById("deposit-amount");
+  const $deposit = getElementById("deposit");
   const $depositResult = getElementById("deposit-result");
+  const $send = getElementById("send");
+  const $sendResult = getElementById("send-result");
+  const $balance = getElementById("balance");
   // get accounts
   let accounts = [];
   web3.eth.getAccounts().then((_accounts) => {
     accounts = _accounts;
   });
   // deposit function
-  $depositAmount.addEventListener("submit", (evt) => {
+  $deposit.addEventListener("submit", (evt) => {
     evt.preventDefault();
-    const depositAmount = evt.target.element[0].value
+    const depositAmount = evt.target.elements[0].value;
+    etherWallet.methods
       .desposit(amount)
       .send({ from: accounts[0] })
       .then(() => {
         $depositResult.innerHTML = `${amount} was added to the wallet`;
+        showBalance();
       })
       .catch((err) => {
         $depositResult.innerHTML = `Faile to desposit Ether`;
@@ -57,6 +62,32 @@ const initApp = () => {
       });
   });
   // send function
+  $send.addEventListener("submit", (evt) => {
+    evt.preventDefault();
+    const sendTo = evt.target.elements[0].value;
+    const sendAmount = evt.target.elements[1].value;
+    etherWallet.methods
+      .send(sendTo, sendAmount)
+      .send({ from: accounts[0] })
+      .then(() => {
+        $sendResult.innerHTML = `${sendAmount} sent to ${sendTo}`;
+        showBalance();
+      })
+      .catch((err) => {
+        $sendResult.innerHTML = `Could not transfer ether due to an error`;
+        console.error(err);
+      });
+  });
+
+  // Show balance
+  const showBalance = () => {
+    etherWallet.methods
+      .balanceOf()
+      .call()
+      .then((_result) => {
+        $balance.innerHTML = `Current balance is ${_result}`;
+      });
+  };
 };
 
 document.addEventListener("DOMContentLoaded", () => {
