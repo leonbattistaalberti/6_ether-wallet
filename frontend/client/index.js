@@ -2,7 +2,7 @@ import Web3 from "web3";
 import EtherWallet from "../build/contracts/EtherWallet.json";
 
 let web3;
-let EtherWallet;
+let etherWallet;
 
 const initWeb3 = () => {
   return new Promise((resolve, reject) => {
@@ -26,34 +26,49 @@ const initWeb3 = () => {
 };
 
 const initContract = async () => {
-  const networkId = await web3.eth.net.getId();
+  const deploymentKey = Object.keys(EtherWallet.networks)[0];
+
+  console.log(deploymentKey);
   return new web3.eth.Contract(
     EtherWallet.abi,
-    EtherWallet.networks[networkId].address
+    EtherWallet.networks[deploymentKey].address
   );
 };
 
 const initApp = () => {
   // get DOM elements
-  const $deposit = getElementById("deposit");
-  const $depositResult = getElementById("deposit-result");
-  const $send = getElementById("send");
-  const $sendResult = getElementById("send-result");
-  const $balance = getElementById("balance");
+  const $deposit = document.getElementById("deposit");
+  const $depositResult = document.getElementById("deposit-result");
+  const $send = document.getElementById("send");
+  const $sendResult = document.getElementById("send-result");
+  const $balance = document.getElementById("balance");
   // get accounts
   let accounts = [];
   web3.eth.getAccounts().then((_accounts) => {
     accounts = _accounts;
   });
+
+  // Show balance
+  const showBalance = () => {
+    etherWallet.methods
+      .balanceOf()
+      .call()
+      .then((result) => {
+        $balance.innerHTML = result;
+      });
+  };
+
+  showBalance();
+
   // deposit function
   $deposit.addEventListener("submit", (evt) => {
     evt.preventDefault();
     const depositAmount = evt.target.elements[0].value;
     etherWallet.methods
-      .desposit(amount)
-      .send({ from: accounts[0] })
-      .then(() => {
-        $depositResult.innerHTML = `${amount} was added to the wallet`;
+      .deposit()
+      .send({ from: accounts[0], value: depositAmount })
+      .then((result) => {
+        $depositResult.innerHTML = `${depositAmount} was added to the wallet`;
         showBalance();
       })
       .catch((err) => {
@@ -78,18 +93,7 @@ const initApp = () => {
         console.error(err);
       });
   });
-
-  // Show balance
-  const showBalance = () => {
-    etherWallet.methods
-      .balanceOf()
-      .call()
-      .then((_result) => {
-        $balance.innerHTML = `Current balance is ${_result}`;
-      });
-  };
 };
-
 document.addEventListener("DOMContentLoaded", () => {
   initWeb3()
     .then((_web3) => {
